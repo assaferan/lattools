@@ -8,6 +8,10 @@
  * Load: load "bv.m";
  */
 
+// Build the adjacency matrix from short vectors of a lattice.
+// Returns an integer 0/1 matrix: R = C * gram * C^T mod 2,
+// where rows of C are coordinates of short vectors (one per {v,-v} pair).
+// Uses GF(2) matrix multiply (bit-packed) instead of per-pair inner products.
 function LatticeGraph(gram, d)
     L := LatticeWithGram(gram);
     S := ShortVectors(L, d);
@@ -15,8 +19,9 @@ function LatticeGraph(gram, d)
         return Matrix(Integers(), 0, 0, []);
     end if;
     m := #S;
-    R := Matrix(GF(2), m, m,
-         [InnerProduct(S[i][1], S[j][1]) : i in [1..m], j in [1..m]]);
+    n := Nrows(gram);
+    C := Matrix(GF(2), m, n, &cat[Eltseq(S[i][1]) : i in [1..m]]);
+    R := C * ChangeRing(gram, GF(2)) * Transpose(C);
     return ChangeRing(R, Integers());
 end function;
 
@@ -26,14 +31,15 @@ function ColSig(col)
 end function;
 
 // BV invariant -- returns [ <sig, count>, ... ]
+// Squares over Z instead of GF(p): since G is 0/1 and p > m,
+// entries of G^2 are at most m < p, so mod p is a no-op.
+// Uses row iteration (S is symmetric) for cache-friendly access.
 function BV(gram, d)
     G := LatticeGraph(gram, d);
     m := Nrows(G);
     if m eq 0 then return []; end if;
-    p := NextPrime(m);
-    Gp := ChangeRing(G, GF(p));
-    S := Gp^2;
-    cols := [ColSig([Integers()!S[i,j] : i in [1..m]]) : j in [1..m]];
+    S := G^2;
+    cols := [ColSig(Eltseq(r)) : r in Rows(S)];
     return Sort([<sig, cnt> : sig -> cnt in {* c : c in cols *}]);
 end function;
 
