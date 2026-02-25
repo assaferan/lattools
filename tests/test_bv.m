@@ -49,10 +49,10 @@ printf "============================================================\n";
 t0 := Cputime();
 tot_bv := 0.0; tot_poly := 0.0; tot_xor := 0.0;
 ok := true;
-for i := 1 to #data do
-    gram := data[i][1];
-    exp_poly := data[i][2];
-    exp_xor := data[i][3];
+for i -> entry in data do
+    gram := entry[1];
+    exp_poly := entry[2];
+    exp_xor := entry[3];
     n := Nrows(gram);
     assert gram eq Transpose(gram);
     t1 := Cputime();
