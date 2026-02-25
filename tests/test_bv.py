@@ -11,23 +11,21 @@ from bv import BV, HBV_poly, HBV_xor
 from sage.all import Matrix, ZZ
 
 def load_test_data(path):
-    """Parse test_bv_data.txt -> list of (gram, expected_poly, expected_xor)."""
+    """Parse test_bv_data.txt -> list of (gram, D, expected_poly, expected_xor)."""
     data = []
     with open(path) as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
-            gram_str, poly_str, xor_str = line.split(':')
-            # parse [a,b,...] -> list of ints
+            gram_str, d_str, poly_str, xor_str = line.split(':')
             entries = list(map(int, gram_str.strip().strip('[]').split(',')))
             n = int(len(entries)**0.5)
             assert n * n == len(entries), f"entry count {len(entries)} is not a perfect square"
             gram = Matrix(ZZ, n, n, entries)
-            data.append((gram, int(poly_str.strip()), int(xor_str.strip())))
+            data.append((gram, int(d_str.strip()), int(poly_str.strip()), int(xor_str.strip())))
     return data
 
-D = 4  # short vector bound
 if len(sys.argv) > 1:
     data_path = sys.argv[1]
 else:
@@ -41,7 +39,7 @@ print("=" * 60)
 t0 = time.time()
 total_bv = total_poly = total_xor = 0
 ok = True
-for i, (gram, exp_poly, exp_xor) in enumerate(test_data):
+for i, (gram, D, exp_poly, exp_xor) in enumerate(test_data):
     assert gram == gram.T, f"Matrix {i+1} is not symmetric"
     t1 = time.time()
     bv = BV(gram, D)

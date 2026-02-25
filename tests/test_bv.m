@@ -25,16 +25,16 @@ function LoadTestData(path)
         n := Isqrt(#entries);
         assert n^2 eq #entries;
         gram := Matrix(Integers(), n, n, entries);
-        poly_h := StringToInteger(StripWhiteSpace(parts[2]));
-        xor_h := StringToInteger(StripWhiteSpace(parts[3]));
-        Append(~data, <gram, poly_h, xor_h>);
+        d := StringToInteger(StripWhiteSpace(parts[2]));
+        poly_h := StringToInteger(StripWhiteSpace(parts[3]));
+        xor_h := StringToInteger(StripWhiteSpace(parts[4]));
+        Append(~data, <gram, d, poly_h, xor_h>);
     end while;
     return data;
 end function;
 
 // ---- Tests ----
 
-D := 4;
 if assigned args and #args ge 1 then
     data_file := args[1];
 else
@@ -51,8 +51,9 @@ tot_bv := 0.0; tot_poly := 0.0; tot_xor := 0.0;
 ok := true;
 for i -> entry in data do
     gram := entry[1];
-    exp_poly := entry[2];
-    exp_xor := entry[3];
+    D := entry[2];
+    exp_poly := entry[3];
+    exp_xor := entry[4];
     n := Nrows(gram);
     assert gram eq Transpose(gram);
     t1 := Cputime();
