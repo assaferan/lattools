@@ -7,7 +7,7 @@
 \\ Defaults to tests/test_bv_data.txt.
 \\
 
-default(parisize, 256000000); \\ 256 MB stack
+default(parisize, 1024000000); \\ 1 GB stack
 \r alt/bv.gp
 
 \\ ---- Load test data ----
