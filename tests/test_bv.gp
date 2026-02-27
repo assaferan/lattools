@@ -38,8 +38,9 @@ print("BV invariant test -- GP");
 print("============================================================");
 
 {
-my(ok = 1, gram, D, ep, ex, bv, hp, hx, n,
-   t0, t1, t2, t3, tot_bv = 0, tot_poly = 0, tot_xor = 0);
+my(ok = 1, gram, D, ep, ex, bv, hp, hx, n, m,
+   t0, t1, t2, tot_bv = 0,
+   buckets = Map(), bk, bt, bc);
 t0 = getabstime();
 for(i = 1, #test_data,
   gram = test_data[i][1];
@@ -48,26 +49,32 @@ for(i = 1, #test_data,
   ex = test_data[i][4];
   n = #gram;
   if(gram != gram~, error("Matrix ", i, " not symmetric"));
+  m = #qfminim(gram, D)[3];
   t1 = getabstime();
   bv = BV(gram, D);
   t2 = getabstime();
   hp = HBV_poly(bv);
-  t3 = getabstime();
   hx = HBV_xor(bv);
-  my(t4 = getabstime());
-  tot_bv += t2 - t1; tot_poly += t3 - t2; tot_xor += t4 - t3;
-  print("  Matrix ", i, " (", n, "x", n, "): poly = ", hp, "  xor = ", hx,
-        "  (BV ", t2-t1, "ms  poly ", t3-t2, "ms  xor ", t4-t3, "ms)");
-  if(hp != ep,
-    print("FAIL: matrix ", i, " poly hash mismatch: got ", hp, ", expected ", ep);
+  tot_bv += t2 - t1;
+  bk = ceil(log(max(m, 1))/log(2));
+  if(!mapisdefined(buckets, bk),
+    mapput(buckets, bk, [0, 0]));
+  bt = mapget(buckets, bk);
+  mapput(buckets, bk, [bt[1] + t2 - t1, bt[2] + 1]);
+  if(hp != ep || hx != ex,
+    print("FAIL: Matrix ", i, " (", n, "x", n, ", m=", m, "): poly = ", hp, "  xor = ", hx,
+          "  (BV ", t2-t1, "ms)");
     ok = 0;
-  );
-  if(hx != ex,
-    print("FAIL: matrix ", i, " xor hash mismatch: got ", hx, ", expected ", ex);
-    ok = 0;
+  ,
+    print("  Matrix ", i, " (", n, "x", n, ", m=", m, "): BV ", t2-t1, "ms");
   );
 );
-print("  Total: ", getabstime() - t0, "ms  (BV ", tot_bv, "ms  poly ", tot_poly, "ms  xor ", tot_xor, "ms)");
+print("  Total: ", getabstime() - t0, "ms  (BV ", tot_bv, "ms)");
+my(keys = vecsort(Vec(mattranspose(Mat(buckets))[1,])));
+for(j = 1, #keys,
+  bt = mapget(buckets, keys[j]);
+  print("  m <= 2^", keys[j], ": ", bt[2], " matrices, BV ", bt[1], "ms");
+);
 if(ok, print("PASS: all hashes match expected values (cross-implementation verified)"));
 }
 
@@ -83,15 +90,28 @@ print("C-level fast_marked_HBV (eqfminim.so) -- timing comparison");
 print("============================================================");
 
 {
-my(t0 = getabstime(), gram, D, h, t1, n);
+my(t0 = getabstime(), gram, D, h, m, t1, n, tot = 0,
+   buckets = Map(), bk, bt, keys);
 for(i = 1, #test_data,
   gram = test_data[i][1];
   D = test_data[i][2];
   n = #gram;
+  m = #qfminim(gram, D)[3];
   t1 = getabstime();
   h = fast_marked_HBV(gram, [], D);
   my(dt = getabstime() - t1);
-  print("  Matrix ", i, " (", n, "x", n, "): C hash = ", h, "  (", dt, "ms)");
+  tot += dt;
+  bk = ceil(log(max(m, 1))/log(2));
+  if(!mapisdefined(buckets, bk),
+    mapput(buckets, bk, [0, 0]));
+  bt = mapget(buckets, bk);
+  mapput(buckets, bk, [bt[1] + dt, bt[2] + 1]);
+  print("  Matrix ", i, " (", n, "x", n, ", m=", m, "): ", dt, "ms");
 );
 print("  Total: ", getabstime() - t0, "ms");
+keys = vecsort(Vec(mattranspose(Mat(buckets))[1,]));
+for(j = 1, #keys,
+  bt = mapget(buckets, keys[j]);
+  print("  m <= 2^", keys[j], ": ", bt[2], " matrices, ", bt[1], "ms");
+);
 }

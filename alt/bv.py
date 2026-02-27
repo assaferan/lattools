@@ -1,6 +1,6 @@
 from collections import Counter
 
-from sage.all import GF, Matrix, ZZ, next_prime, pari
+from sage.all import GF, Matrix, ZZ, pari
 
 
 def graph(gram, d):
@@ -72,7 +72,9 @@ def graph(gram, d):
     m = S.nrows()
     if m == 0:
         return Matrix(GF(2), 0, 0)
-    return (S * gram * S.T).change_ring(GF(2))
+    # Use GF(2) matrix multiply (M4RI, bit-packed) instead of Z multiply then reduce
+    S2 = S.change_ring(GF(2))
+    return S2 * gram.change_ring(GF(2)) * S2.T
 
 
 def BV(gram, d):
@@ -125,14 +127,13 @@ def BV(gram, d):
     m = G.ncols()
     if m == 0:
         return ()
-    p = next_prime(m)
-    Gp = G.change_ring(GF(p))
-    G2 = Gp * Gp
-    # For each column, compute a canonical signature: sorted (value, count) pairs
+    # Square over Z: G is 0/1 and p > m, so entries of G^2 < p, mod p is a no-op
+    Gi = G.change_ring(ZZ)
+    G2 = Gi * Gi
+    # Row iteration (G2 is symmetric) for each row signature: sorted (value, count) pairs
     cols = []
-    for j in range(m):
-        col = tuple(int(G2[i, j]) for i in range(m))
-        sig = tuple(sorted(Counter(col).items()))
+    for row in G2:
+        sig = tuple(sorted(Counter(int(x) for x in row).items()))
         cols.append(sig)
     # Outer multiset: sorted (signature, count) pairs
     return tuple(sorted(Counter(cols).items()))

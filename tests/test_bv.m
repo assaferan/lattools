@@ -47,7 +47,8 @@ printf "BV invariant test -- Magma\n";
 printf "============================================================\n";
 
 t0 := Cputime();
-tot_bv := 0.0; tot_poly := 0.0; tot_xor := 0.0;
+tot_bv := 0.0;
+bv_by_bucket := AssociativeArray(); cnt_by_bucket := AssociativeArray();
 ok := true;
 for i -> entry in data do
     gram := entry[1];
@@ -60,22 +61,27 @@ for i -> entry in data do
     bv := BV(gram, D);
     t2 := Cputime();
     hp := HBV_poly(bv);
-    t3 := Cputime();
     hx := HBV_xor(bv);
-    t4 := Cputime();
-    tot_bv +:= t2 - t1; tot_poly +:= t3 - t2; tot_xor +:= t4 - t3;
-    printf "  Matrix %o (%ox%o): poly = %o  xor = %o  (BV %os  poly %os  xor %os)\n",
-           i, n, n, hp, hx, t2-t1, t3-t2, t4-t3;
-    if hp ne exp_poly then
-        printf "FAIL: matrix %o poly hash mismatch: got %o, expected %o\n", i, hp, exp_poly;
-        ok := false;
+    tot_bv +:= t2 - t1;
+    m := #ShortVectors(LatticeWithGram(gram), D);
+    b := Ceiling(Log(2, Max(m, 1)));
+    if not IsDefined(bv_by_bucket, b) then
+        bv_by_bucket[b] := 0.0; cnt_by_bucket[b] := 0;
     end if;
-    if hx ne exp_xor then
-        printf "FAIL: matrix %o xor hash mismatch: got %o, expected %o\n", i, hx, exp_xor;
+    bv_by_bucket[b] +:= t2 - t1; cnt_by_bucket[b] +:= 1;
+    if hp ne exp_poly or hx ne exp_xor then
+        printf "FAIL: Matrix %o (%ox%o, m=%o): poly = %o  xor = %o  (BV %os)\n",
+               i, n, n, m, hp, hx, t2-t1;
         ok := false;
+    else
+        printf "  Matrix %o (%ox%o, m=%o): BV %os\n", i, n, n, m, t2-t1;
     end if;
 end for;
-printf "  Total: %os  (BV %os  poly %os  xor %os)\n", Cputime(t0), tot_bv, tot_poly, tot_xor;
+printf "  Total: %os  (BV %os)\n", Cputime(t0), tot_bv;
+for b in Sort(SetToSequence(Keys(bv_by_bucket))) do
+    printf "  m <= 2^%o: %o matrices, BV %os\n",
+           b, cnt_by_bucket[b], bv_by_bucket[b];
+end for;
 
 if ok then
     printf "PASS: all hashes match expected values (cross-implementation verified)\n";
