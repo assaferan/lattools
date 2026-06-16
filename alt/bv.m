@@ -5,7 +5,7 @@
  * Uses PARI's qfminim convention: v^T * gram * v <= d.
  * Magma's LatticeWithGram + ShortVectors uses the same convention.
  *
- * Load: load "bv.m";
+ * Attach: Attach("bv.m");   // package file: HBV_poly, HBV_xor, HBV, BV are intrinsics
  */
 
 // Build the adjacency matrix from short vectors of a lattice.
@@ -34,14 +34,15 @@ end function;
 // Squares over Z instead of GF(p): since G is 0/1 and p > m,
 // entries of G^2 are at most m < p, so mod p is a no-op.
 // Uses row iteration (S is symmetric) for cache-friendly access.
-function BV(gram, d)
+intrinsic BV(gram::Mtrx, d::RngIntElt) -> SeqEnum
+{BV invariant: sorted sequence of <signature, count> tuples for the Gram matrix}
     G := LatticeGraph(gram, d);
     m := Nrows(G);
     if m eq 0 then return []; end if;
     S := G^2;
     cols := [ColSig(Eltseq(r)) : r in Rows(S)];
     return Sort([<sig, cnt> : sig -> cnt in {* c : c in cols *}]);
-end function;
+end intrinsic;
 
 // Portable polynomial hash matching bv.py HBV_poly
 intrinsic HBV_poly(bv::SeqEnum[Tup]) -> RngIntElt
