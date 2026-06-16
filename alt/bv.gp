@@ -32,13 +32,14 @@ col_sig(v) = {
 };
 
 \\ BV invariant (output format: [[sig, count], ...])
+\\ Uses rows (S is symmetric) instead of columns.
 BV(gram, d) = {
   my(G = graph(gram, d));
   if(G === 0, return([]));
   my(m = #G, p, S, cols, result, current, count);
   p = nextprime(m+1); \\ smallest prime > m, matching Sage next_prime(m)
   S = lift(FpM_mul(G, G, p));
-  cols = vector(m, j, col_sig(Vec(S[,j])));
+  cols = vector(m, j, col_sig(Vec(S[j,])));
   cols = vecsort(cols);
   result = List();
   current = cols[1]; count = 1;

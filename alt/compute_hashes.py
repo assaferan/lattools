@@ -6,7 +6,7 @@ Usage: sage -python alt/compute_hashes.py input_file [D]
 Reads a file with one Gram matrix per line (as [a,b,...] flat row-major)
 and outputs test data in the format used by tests/test_bv_data.txt:
 
-    [gram_flat]:HBV_poly:HBV_xor
+    [gram_flat]:D:HBV_poly:HBV_xor
 
 D defaults to 4 (short vector bound).
 """
@@ -35,4 +35,4 @@ for line in lines:
     hp = HBV_poly(bv)
     hx = HBV_xor(bv)
     flat = ','.join(str(e) for e in entries)
-    print(f"[{flat}]:{hp}:{hx}")
+    print(f"[{flat}]:{D}:{hp}:{hx}")
