@@ -7,7 +7,7 @@
 
 SetColumns(0);
 
-load "alt/bv.m";
+Attach("alt/bv.m");
 
 function LoadTestData(path)
     data := [* *];
