@@ -44,7 +44,8 @@ function BV(gram, d)
 end function;
 
 // Portable polynomial hash matching bv.py HBV_poly
-function HBV_poly(bv)
+intrinsic HBV_poly(bv::SeqEnum[Tup]) -> RngIntElt
+{Poly based hash of a sequence of integers}
     M := 2^61 - 1;
     h := 0;
     for entry in bv do
@@ -55,10 +56,11 @@ function HBV_poly(bv)
         h := (h * 1000003 + entry[2]) mod M;
     end for;
     return h;
-end function;
+end intrinsic;
 
 // Portable XOR-multiply hash matching bv.py HBV_xor
-function HBV_xor(bv)
+intrinsic HBV_xor(bv::SeqEnum[Tup]) -> RngIntElt
+{Xor based hash of a sequence of integers}
     M := 2^64;
     MULT := 1111111111111111111;
     h := 13282407956253574712;
@@ -70,8 +72,9 @@ function HBV_xor(bv)
         h := (BitwiseXor(h, entry[2]) * MULT) mod M;
     end for;
     return h;
-end function;
+end intrinsic;
 
-function HBV(gram, d)
+intrinsic HBV(gram::Mtrx, d::RngIntElt) -> RngIntElt
+{The main BV-based hash for a Gram matrix}
     return HBV_poly(BV(gram, d));
-end function;
+end intrinsic;
